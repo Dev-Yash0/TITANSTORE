@@ -57,6 +57,30 @@ async def cb_handler(client: Bot, query: CallbackQuery):
         )
 
     # =====================================================
+    # START MENU
+    # =====================================================
+    elif data == "start":
+        await query.message.edit_text(
+            text=START_MSG.format(first=query.from_user.first_name),
+            disable_web_page_preview=True,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton("🧠 ʜᴇʟᴘ", callback_data="help"),
+                        InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")
+                    ],
+                    [
+                        InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings")
+                    ],
+                    [
+                        InlineKeyboardButton("🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/TitanXBots"),
+                        InlineKeyboardButton("🔍 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/TitanMattersSupport")
+                    ]
+                ]
+            )
+        )
+        
+    # =====================================================
     # SETTINGS PANEL
     # =====================================================
     elif data == "settings":
