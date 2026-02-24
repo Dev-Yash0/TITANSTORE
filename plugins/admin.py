@@ -1,11 +1,13 @@
-# TitanXBots - Admin Settings UI
+# TitanXBots - Admin Settings UI (FIXED)
 
 from bot import Bot
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from config import OWNER_ID
-from database.database import add_admin, remove_admin, list_admins, is_admin
+from database.database import add_admin, remove_admin, list_admins
 
+# Temporary state memory
+ADD_ADMIN_MODE = {}
 
 # =====================================================
 # /settings Command
@@ -30,24 +32,27 @@ async def settings_menu(client, message):
 
 
 # =====================================================
-# ADD ADMIN BY REPLY
+# ADD ADMIN MODE HANDLER
 # =====================================================
 
-@Bot.on_message(filters.private & filters.reply)
-async def add_admin_by_reply(client, message):
+@Bot.on_message(filters.private & filters.text)
+async def add_admin_handler(client, message):
 
     if message.from_user.id != OWNER_ID:
         return
 
-    if message.reply_to_message and message.reply_to_message.text == "<b>➕ Add Admin</b>\n\nReply with the User ID to add.":
+    if not ADD_ADMIN_MODE.get(message.from_user.id):
+        return
 
-        try:
-            new_admin = int(message.text.strip())
-        except:
-            return await message.reply_text("❌ Send valid User ID.")
+    try:
+        new_admin = int(message.text.strip())
+    except:
+        return await message.reply_text("❌ Send valid numeric User ID.")
 
-        await add_admin(new_admin)
-        await message.reply_text(f"✅ Added <code>{new_admin}</code> as admin.")
+    await add_admin(new_admin)
+    ADD_ADMIN_MODE.pop(message.from_user.id, None)
+
+    await message.reply_text(f"✅ Added <code>{new_admin}</code> as admin.")
 
 
 # =====================================================
@@ -57,16 +62,18 @@ async def add_admin_by_reply(client, message):
 @Bot.on_callback_query()
 async def admin_callbacks(client, query: CallbackQuery):
 
-    await query.answer()
-
     if query.from_user.id != OWNER_ID:
         return await query.answer("⛔ Unauthorized!", show_alert=True)
+
+    await query.answer()
 
     # ---------------- ADD ADMIN ----------------
     if query.data == "add_admin":
 
+        ADD_ADMIN_MODE[query.from_user.id] = True
+
         await query.message.edit_text(
-            "<b>➕ Add Admin</b>\n\nReply with the User ID to add."
+            "<b>➕ Add Admin</b>\n\nSend the User ID to add as admin."
         )
 
     # ---------------- REMOVE ADMIN ----------------
@@ -108,6 +115,7 @@ async def admin_callbacks(client, query: CallbackQuery):
             reply_markup=keyboard
         )
 
+    # ---------------- FINAL REMOVE ----------------
     elif query.data.startswith("remove_"):
 
         remove_id = int(query.data.split("_")[-1])
