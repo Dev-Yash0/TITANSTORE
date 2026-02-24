@@ -4,12 +4,12 @@ from bot import Bot
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from config import OWNER_ID
-from database.database import add_admin, remove_admin, list_admins
+from database.database import add_admin, remove_admin, list_admins, is_admin
 
 
-# -------------------------------
-# SETTINGS MENU BUTTON
-# -------------------------------
+# =====================================================
+# /settings Command
+# =====================================================
 
 @Bot.on_message(filters.command("settings") & filters.private)
 async def settings_menu(client, message):
@@ -29,28 +29,44 @@ async def settings_menu(client, message):
     )
 
 
-# -------------------------------
+# =====================================================
+# ADD ADMIN BY REPLY
+# =====================================================
+
+@Bot.on_message(filters.private & filters.reply)
+async def add_admin_by_reply(client, message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    if message.reply_to_message and message.reply_to_message.text == "<b>➕ Add Admin</b>\n\nReply with the User ID to add.":
+
+        try:
+            new_admin = int(message.text.strip())
+        except:
+            return await message.reply_text("❌ Send valid User ID.")
+
+        await add_admin(new_admin)
+        await message.reply_text(f"✅ Added <code>{new_admin}</code> as admin.")
+
+
+# =====================================================
 # CALLBACK HANDLER
-# -------------------------------
+# =====================================================
 
 @Bot.on_callback_query()
-async def admin_settings_callbacks(client, query: CallbackQuery):
+async def admin_callbacks(client, query: CallbackQuery):
 
-    await query.answer()  # IMPORTANT
+    await query.answer()
 
-    user_id = query.from_user.id
-
-    if user_id != OWNER_ID:
-        return await query.answer("⛔ Unauthorized Access!", show_alert=True)
+    if query.from_user.id != OWNER_ID:
+        return await query.answer("⛔ Unauthorized!", show_alert=True)
 
     # ---------------- ADD ADMIN ----------------
     if query.data == "add_admin":
 
         await query.message.edit_text(
-            "<b>➕ Add Admin</b>\n\nReply with the User ID to add.",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back", callback_data="settings_menu")]
-            ])
+            "<b>➕ Add Admin</b>\n\nReply with the User ID to add."
         )
 
     # ---------------- REMOVE ADMIN ----------------
