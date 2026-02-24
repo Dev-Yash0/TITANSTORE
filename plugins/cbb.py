@@ -2,7 +2,7 @@ from pyrogram import Client
 from bot import Bot
 from config import *
 from Script import COMMANDS_TXT, DISCLAIMER_TXT
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from database.database import add_user, del_user, full_userbase, present_user
 
 
