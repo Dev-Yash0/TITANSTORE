@@ -126,34 +126,33 @@ async def start_command(client: Client, message: Message):
         
         return
     else:
-    reply_markup = InlineKeyboardMarkup(
+        reply_markup = InlineKeyboardMarkup(
+    [
         [
-            [
-                InlineKeyboardButton("🧠 ʜᴇʟᴘ", callback_data="help"),
-                InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")
-            ],
-            [
-                InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings")
-            ],
-            [
-                InlineKeyboardButton("🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/TitanXBots"),
-                InlineKeyboardButton("🔍 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/TitanMattersSupport")
-            ]
+            InlineKeyboardButton("🧠 ʜᴇʟᴘ", callback_data="help"),
+            InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")
+        ],
+        [
+            InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings")
+        ],
+        [
+            InlineKeyboardButton("🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/TitanXBots"),
+            InlineKeyboardButton("🔍 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/TitanMattersSupport")
         ]
-    )
-
-    await message.reply_photo(
-        photo=START_PIC,
-        caption=START_MSG.format(
-            first=message.from_user.first_name,
-            last=message.from_user.last_name,
-            username=None if not message.from_user.username else '@' + message.from_user.username,
-            mention=message.from_user.mention,
-            id=message.from_user.id
-        ),
-        reply_markup=reply_markup,
-    )
-    return
+    ]
+        )
+        await message.reply_photo(
+            photo=START_PIC,
+            caption=START_MSG.format(
+                first=message.from_user.first_name or "",
+                last=message.from_user.last_name or "",
+                username=f"@{message.from_user.username}" if message.from_user.username else "Not Available",
+                mention=message.from_user.mention,
+                id=message.from_user.id
+            ),
+            reply_markup=reply_markup,
+        )
+        return
     
 
 #=====================================================================================##
