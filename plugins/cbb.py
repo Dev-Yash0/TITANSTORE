@@ -14,17 +14,44 @@ from database.database import add_user, del_user, full_userbase, present_user
 async def cb_handler(client: Bot, query: CallbackQuery):
     data = query.data
 
+    # Always answer callback (IMPORTANT)
+    await query.answer()
+
+    # =====================================================
+    # START MENU
+    # =====================================================
+    if data == "start":
+        await query.message.edit_text(
+            text=START_MSG.format(first=query.from_user.first_name),
+            disable_web_page_preview=True,
+            reply_markup=InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton("🧠 ʜᴇʟᴘ", callback_data="help"),
+                        InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")
+                    ],
+                    [
+                        InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings")
+                    ],
+                    [
+                        InlineKeyboardButton("🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/TitanXBots"),
+                        InlineKeyboardButton("🔍 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/TitanMattersSupport")
+                    ]
+                ]
+            )
+        )
+
     # =====================================================
     # HELP MENU
     # =====================================================
-    if data == "help":
+    elif data == "help":
         await query.message.edit_text(
             text=HELP_TXT.format(first=query.from_user.first_name),
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
-                        InlineKeyboardButton("🧑‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴏᴡɴᴇʀ", user_id=5356695781),
+                        InlineKeyboardButton("🧑‍💻 ᴄᴏɴᴛᴀᴄᴛ ᴏᴡɴᴇʀ", user_id=OWNER_ID),
                         InlineKeyboardButton("💬 ᴄᴏᴍᴍᴀɴᴅꜱ", callback_data="commands")
                     ],
                     [
@@ -57,30 +84,6 @@ async def cb_handler(client: Bot, query: CallbackQuery):
         )
 
     # =====================================================
-    # START MENU
-    # =====================================================
-    elif data == "start":
-        await query.message.edit_text(
-            text=START_MSG.format(first=query.from_user.first_name),
-            disable_web_page_preview=True,
-            reply_markup=InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("🧠 ʜᴇʟᴘ", callback_data="help"),
-                        InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")
-                    ],
-                    [
-                        InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings")
-                    ],
-                    [
-                        InlineKeyboardButton("🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/TitanXBots"),
-                        InlineKeyboardButton("🔍 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/TitanMattersSupport")
-                    ]
-                ]
-            )
-        )
-        
-    # =====================================================
     # SETTINGS PANEL
     # =====================================================
     elif data == "settings":
@@ -103,6 +106,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
     # ADMIN SETTINGS PANEL
     # =====================================================
     elif data == "admin_settings":
+
         if query.from_user.id != OWNER_ID:
             return await query.answer("⛔ Access Denied!", show_alert=True)
 
@@ -110,19 +114,43 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             text="<b>👑 Admin Control Panel</b>\n\nSelect an option below:",
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton("➕ Add Admin", callback_data="add_admin")
-                    ],
-                    [
-                        InlineKeyboardButton("➖ Remove Admin", callback_data="remove_admin")
-                    ],
-                    [
-                        InlineKeyboardButton("📋 Admin List", callback_data="admin_list")
-                    ],
-                    [
-                        InlineKeyboardButton("🔙 Back", callback_data="settings")
-                    ]
+                    [InlineKeyboardButton("➕ Add Admin", callback_data="add_admin")],
+                    [InlineKeyboardButton("➖ Remove Admin", callback_data="remove_admin")],
+                    [InlineKeyboardButton("📋 Admin List", callback_data="admin_list")],
+                    [InlineKeyboardButton("🔙 Back", callback_data="settings")]
                 ]
+            )
+        )
+
+    # =====================================================
+    # ADD ADMIN
+    # =====================================================
+    elif data == "add_admin":
+        if query.from_user.id != OWNER_ID:
+            return await query.answer("⛔ Access Denied!", show_alert=True)
+
+        await query.answer("Send user ID to add as admin.", show_alert=True)
+
+    # =====================================================
+    # REMOVE ADMIN
+    # =====================================================
+    elif data == "remove_admin":
+        if query.from_user.id != OWNER_ID:
+            return await query.answer("⛔ Access Denied!", show_alert=True)
+
+        await query.answer("Send user ID to remove admin.", show_alert=True)
+
+    # =====================================================
+    # ADMIN LIST
+    # =====================================================
+    elif data == "admin_list":
+        if query.from_user.id != OWNER_ID:
+            return await query.answer("⛔ Access Denied!", show_alert=True)
+
+        await query.message.edit_text(
+            "<b>📋 Admin List</b>\n\nFeature not connected to database yet.",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("🔙 Back", callback_data="admin_settings")]]
             )
         )
 
@@ -135,9 +163,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton("🔙 ʙᴀᴄᴋ ᴛᴏ ʜᴇʟᴘ", callback_data="help")
-                    ],
+                    [InlineKeyboardButton("🔙 ʙᴀᴄᴋ ᴛᴏ ʜᴇʟᴘ", callback_data="help")],
                     [
                         InlineKeyboardButton("⚓ ʜᴏᴍᴇ", callback_data="start"),
                         InlineKeyboardButton("⚡ ᴄʟᴏꜱᴇ", callback_data="close")
@@ -155,9 +181,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
                 [
-                    [
-                        InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")
-                    ],
+                    [InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")],
                     [
                         InlineKeyboardButton("⚓ ʜᴏᴍᴇ", callback_data="start"),
                         InlineKeyboardButton("⚡ ᴄʟᴏꜱᴇ", callback_data="close")
@@ -171,7 +195,3 @@ async def cb_handler(client: Bot, query: CallbackQuery):
     # =====================================================
     elif data == "close":
         await query.message.delete()
-        try:
-            await query.message.reply_to_message.delete()
-        except:
-            pass
