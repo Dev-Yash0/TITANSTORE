@@ -71,30 +71,22 @@ async def unban_user(user_id: int):
     """Unban user."""
     banned_users.delete_one({"_id": user_id})
 
-
-# =====================================================
+# ==============================
 # ADMIN MANAGEMENT
-# =====================================================
+# ==============================
 
 async def add_admin(user_id: int):
-    """Add a user as admin."""
     admin_data.update_one(
         {"_id": user_id},
         {"$setOnInsert": {"_id": user_id}},
         upsert=True
     )
 
-
 async def remove_admin(user_id: int):
-    """Remove a user from admin list."""
     admin_data.delete_one({"_id": user_id})
 
-
 async def list_admins() -> list:
-    """Return list of all admin IDs."""
-    return [doc["_id"] for doc in admin_data.find({}, {"_id": 1})]
-
+    return [doc["_id"] for doc in admin_data.find({}, {"_id": 1}).sort("_id", 1)]
 
 async def is_admin(user_id: int) -> bool:
-    """Check if user is admin."""
     return admin_data.find_one({"_id": user_id}) is not None
