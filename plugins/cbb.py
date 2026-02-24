@@ -17,7 +17,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
     # =====================================================
     # HELP MENU
     # =====================================================
-    elif data == "help":
+    if data == "help":
         await query.message.edit_text(
             text=HELP_TXT.format(first=query.from_user.first_name),
             disable_web_page_preview=True,
