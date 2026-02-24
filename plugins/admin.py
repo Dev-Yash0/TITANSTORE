@@ -1,24 +1,26 @@
 # TitanXBots - Admin Settings UI
-from pyrogram import Client, filters
+
+from bot import Bot
+from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from config import OWNER_ID
-from database.database import add_admin, remove_admin, list_admins, is_admin
+from database.database import add_admin, remove_admin, list_admins
 
 
 # -------------------------------
 # SETTINGS MENU BUTTON
 # -------------------------------
 
-@Client.on_message(filters.command("settings") & filters.private)
+@Bot.on_message(filters.command("settings") & filters.private)
 async def settings_menu(client, message):
+
     if message.from_user.id != OWNER_ID:
         return await message.reply_text("⛔ Access Denied.")
 
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("➕ Add Admin", callback_data="add_admin")],
         [InlineKeyboardButton("➖ Remove Admin", callback_data="remove_admin")],
-        [InlineKeyboardButton("📋 Admin List", callback_data="admin_list")],
-        [InlineKeyboardButton("🔙 Back", callback_data="back_main")]
+        [InlineKeyboardButton("📋 Admin List", callback_data="admin_list")]
     ])
 
     await message.reply_text(
@@ -31,19 +33,21 @@ async def settings_menu(client, message):
 # CALLBACK HANDLER
 # -------------------------------
 
-@Client.on_callback_query()
+@Bot.on_callback_query()
 async def admin_settings_callbacks(client, query: CallbackQuery):
+
+    await query.answer()  # IMPORTANT
 
     user_id = query.from_user.id
 
-    # Owner Security
     if user_id != OWNER_ID:
         return await query.answer("⛔ Unauthorized Access!", show_alert=True)
 
     # ---------------- ADD ADMIN ----------------
     if query.data == "add_admin":
+
         await query.message.edit_text(
-            "<b>➕ Add Admin</b>\n\nSend the User ID to add.",
+            "<b>➕ Add Admin</b>\n\nReply with the User ID to add.",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("🔙 Back", callback_data="settings_menu")]
             ])
@@ -62,7 +66,9 @@ async def admin_settings_callbacks(client, query: CallbackQuery):
             for x in admins
         ]
 
-        buttons.append([InlineKeyboardButton("🔙 Back", callback_data="settings_menu")])
+        buttons.append(
+            [InlineKeyboardButton("🔙 Back", callback_data="settings_menu")]
+        )
 
         await query.message.edit_text(
             "<b>➖ Remove Admin</b>\n\nSelect admin to remove:",
@@ -82,7 +88,7 @@ async def admin_settings_callbacks(client, query: CallbackQuery):
         ])
 
         await query.message.edit_text(
-            f"<b>⚠️ Confirm Removal</b>\n\nAre you sure you want to remove:\n<code>{remove_id}</code> ?",
+            f"<b>⚠️ Confirm Removal</b>\n\nRemove admin:\n<code>{remove_id}</code> ?",
             reply_markup=keyboard
         )
 
@@ -91,8 +97,14 @@ async def admin_settings_callbacks(client, query: CallbackQuery):
         remove_id = int(query.data.split("_")[-1])
         await remove_admin(remove_id)
 
-        await query.answer("✅ Admin removed successfully!", show_alert=True)
-        await settings_menu(client, query.message)
+        await query.answer("✅ Admin removed!", show_alert=True)
+
+        await query.message.edit_text(
+            "<b>✅ Admin removed successfully.</b>",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔙 Back", callback_data="settings_menu")]
+            ])
+        )
 
     # ---------------- ADMIN LIST ----------------
     elif query.data == "admin_list":
@@ -115,9 +127,14 @@ async def admin_settings_callbacks(client, query: CallbackQuery):
 
     # ---------------- BACK BUTTON ----------------
     elif query.data == "settings_menu":
-        await settings_menu(client, query.message)
 
-    elif query.data == "back_main":
+        keyboard = InlineKeyboardMarkup([
+            [InlineKeyboardButton("➕ Add Admin", callback_data="add_admin")],
+            [InlineKeyboardButton("➖ Remove Admin", callback_data="remove_admin")],
+            [InlineKeyboardButton("📋 Admin List", callback_data="admin_list")]
+        ])
+
         await query.message.edit_text(
-            "<b>🏠 Main Menu</b>\n\nWelcome back.",
+            "<b>⚙️ Admin Settings Panel</b>\n\nSelect an option below:",
+            reply_markup=keyboard
         )
