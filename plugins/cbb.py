@@ -1,7 +1,23 @@
+# =====================================================
+# IMPORTS
+# =====================================================
+
 from bot import Bot
 from config import *
-from Script import COMMANDS_TXT, DISCLAIMER_TXT
+from Script import *
+from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+
+# Database functions
+from database.database import add_admin, remove_admin, list_admins
+
+
+# =====================================================
+# TEMP MEMORY (STATE SYSTEM)
+# =====================================================
+
+ADD_ADMIN_MODE = {}
+REMOVE_ADMIN_MODE = {}
 
 
 # =====================================================
@@ -10,9 +26,8 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQ
 
 @Bot.on_callback_query()
 async def cb_handler(client: Bot, query: CallbackQuery):
-    data = query.data
 
-    # Always answer callback (IMPORTANT)
+    data = query.data
     await query.answer()
 
     # =====================================================
@@ -30,10 +45,6 @@ async def cb_handler(client: Bot, query: CallbackQuery):
                     ],
                     [
                         InlineKeyboardButton("⚙️ ꜱᴇᴛᴛɪɴɢꜱ", callback_data="settings")
-                    ],
-                    [
-                        InlineKeyboardButton("🤖 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url="https://t.me/TitanXBots"),
-                        InlineKeyboardButton("🔍 ꜱᴜᴘᴘᴏʀᴛ ɢʀᴏᴜᴘ", url="https://t.me/TitanMattersSupport")
                     ]
                 ]
             )
@@ -70,8 +81,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
-                        InlineKeyboardButton("📜 ᴅɪꜱᴄʟᴀɪᴍᴇʀ", callback_data="disclaimer"),
-                        InlineKeyboardButton("🔐 ꜱᴏᴜʀᴄᴇ ᴄᴏᴅᴇ", url="https://github.com/TitanXBots/FileStore-Bot")
+                        InlineKeyboardButton("📜 ᴅɪꜱᴄʟᴀɪᴍᴇʀ", callback_data="disclaimer")
                     ],
                     [
                         InlineKeyboardButton("⚓ ʜᴏᴍᴇ", callback_data="start"),
@@ -121,32 +131,58 @@ async def cb_handler(client: Bot, query: CallbackQuery):
         )
 
     # =====================================================
-    # ADD ADMIN
+    # ADD ADMIN MODE
     # =====================================================
     elif data == "add_admin":
+
         if query.from_user.id != OWNER_ID:
             return await query.answer("⛔ Access Denied!", show_alert=True)
 
-        await query.answer("Send user ID to add as admin.", show_alert=True)
+        ADD_ADMIN_MODE[query.from_user.id] = True
+
+        await query.message.edit_text(
+            "<b>➕ Add Admin</b>\n\nSend the User ID to add as admin.",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("🔙 Back", callback_data="admin_settings")]]
+            )
+        )
 
     # =====================================================
-    # REMOVE ADMIN
+    # REMOVE ADMIN MODE
     # =====================================================
     elif data == "remove_admin":
+
         if query.from_user.id != OWNER_ID:
             return await query.answer("⛔ Access Denied!", show_alert=True)
 
-        await query.answer("Send user ID to remove admin.", show_alert=True)
+        REMOVE_ADMIN_MODE[query.from_user.id] = True
+
+        await query.message.edit_text(
+            "<b>➖ Remove Admin</b>\n\nSend the User ID to remove.",
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("🔙 Back", callback_data="admin_settings")]]
+            )
+        )
 
     # =====================================================
     # ADMIN LIST
     # =====================================================
     elif data == "admin_list":
+
         if query.from_user.id != OWNER_ID:
             return await query.answer("⛔ Access Denied!", show_alert=True)
 
+        admins = await list_admins()
+
+        if not admins:
+            text = "📭 No admins found."
+        else:
+            text = "<b>👑 Current Admins</b>\n\n" + "\n".join(
+                [f"• <code>{x}</code>" for x in admins]
+            )
+
         await query.message.edit_text(
-            "<b>📋 Admin List</b>\n\nFeature not connected to database yet.",
+            text,
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton("🔙 Back", callback_data="admin_settings")]]
             )
@@ -160,13 +196,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             text=COMMANDS_TXT,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
-                [
-                    [InlineKeyboardButton("🔙 ʙᴀᴄᴋ ᴛᴏ ʜᴇʟᴘ", callback_data="help")],
-                    [
-                        InlineKeyboardButton("⚓ ʜᴏᴍᴇ", callback_data="start"),
-                        InlineKeyboardButton("⚡ ᴄʟᴏꜱᴇ", callback_data="close")
-                    ]
-                ]
+                [[InlineKeyboardButton("🔙 Back", callback_data="help")]]
             )
         )
 
@@ -178,13 +208,7 @@ async def cb_handler(client: Bot, query: CallbackQuery):
             text=DISCLAIMER_TXT,
             disable_web_page_preview=True,
             reply_markup=InlineKeyboardMarkup(
-                [
-                    [InlineKeyboardButton("🔰 ᴀʙᴏᴜᴛ", callback_data="about")],
-                    [
-                        InlineKeyboardButton("⚓ ʜᴏᴍᴇ", callback_data="start"),
-                        InlineKeyboardButton("⚡ ᴄʟᴏꜱᴇ", callback_data="close")
-                    ]
-                ]
+                [[InlineKeyboardButton("🔙 Back", callback_data="about")]]
             )
         )
 
@@ -193,3 +217,47 @@ async def cb_handler(client: Bot, query: CallbackQuery):
     # =====================================================
     elif data == "close":
         await query.message.delete()
+
+
+
+# =====================================================
+# ADMIN ID RECEIVER
+# =====================================================
+
+@Bot.on_message(filters.private & filters.text)
+async def admin_id_receiver(client, message):
+
+    if message.from_user.id != OWNER_ID:
+        return
+
+    user_id = message.from_user.id
+
+    # ADD ADMIN
+    if ADD_ADMIN_MODE.get(user_id):
+
+        try:
+            new_admin = int(message.text.strip())
+        except:
+            return await message.reply_text("❌ Send valid numeric User ID.")
+
+        await add_admin(new_admin)
+        ADD_ADMIN_MODE.pop(user_id, None)
+
+        return await message.reply_text(
+            f"✅ Added <code>{new_admin}</code> as admin."
+        )
+
+    # REMOVE ADMIN
+    if REMOVE_ADMIN_MODE.get(user_id):
+
+        try:
+            remove_id = int(message.text.strip())
+        except:
+            return await message.reply_text("❌ Send valid numeric User ID.")
+
+        await remove_admin(remove_id)
+        REMOVE_ADMIN_MODE.pop(user_id, None)
+
+        return await message.reply_text(
+            f"❌ Removed <code>{remove_id}</code> from admin."
+        )
