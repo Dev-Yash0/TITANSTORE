@@ -1,70 +1,45 @@
-# =====================================================
-# TitanXBots - Database Manager
-# =====================================================
+#TitanXBots
 
-import pymongo
+import pymongo, os
 from config import DB_URI, DB_NAME
-
-
-# =====================================================
-# MongoDB Connection
-# =====================================================
 
 dbclient = pymongo.MongoClient(DB_URI)
 database = dbclient[DB_NAME]
 
-user_data = database["users"]
-banned_users = database["banned_users"]
-admin_data = database["admins"]
+user_data = database['users']
+banned_users = database['banned_users']
+admin_data = database['admins']  # <-- NEW COLLECTION
 
-
-# =====================================================
-# USER MANAGEMENT
-# =====================================================
-
-async def present_user(user_id: int) -> bool:
-    """Check if user exists in database."""
-    return bool(user_data.find_one({"_id": user_id}))
-
+# -------------------------------
+# User management
+# -------------------------------
+async def present_user(user_id: int):
+    found = user_data.find_one({'_id': user_id})
+    return bool(found)
 
 async def add_user(user_id: int):
-    """Add user if not exists."""
-    user_data.update_one(
-        {"_id": user_id},
-        {"$setOnInsert": {"_id": user_id}},
-        upsert=True
-    )
+    user_data.update_one({'_id': user_id}, {'$set': {'_id': user_id}}, upsert=True)
 
-
-async def full_userbase() -> list:
-    """Return all user IDs."""
-    return [user["_id"] for user in user_data.find({}, {"_id": 1})]
-
+async def full_userbase():
+    users = user_data.find()
+    return [doc['_id'] for doc in users]
 
 async def del_user(user_id: int):
-    """Delete user."""
-    user_data.delete_one({"_id": user_id})
+    user_data.delete_one({'_id': user_id})
 
-
-# =====================================================
-# BAN / UNBAN MANAGEMENT
-# =====================================================
-
+# -------------------------------
+# Ban and Unban management 
+# -------------------------------
 async def is_banned(user_id: int) -> bool:
-    """Check if user is banned."""
-    return bool(banned_users.find_one({"_id": user_id}))
+    return banned_users.find_one({"_id": user_id}) is not None
 
 
 async def get_ban_reason(user_id: int) -> str:
-    """Return ban reason."""
     data = banned_users.find_one({"_id": user_id})
-    if data:
-        return data.get("reason", "No reason provided")
-    return "No reason provided"
+    return data.get("reason", "No reason provided") if data else "No reason provided"
 
 
 async def ban_user(user_id: int, reason: str):
-    """Ban user with reason."""
     banned_users.update_one(
         {"_id": user_id},
         {"$set": {"reason": reason}},
@@ -73,36 +48,23 @@ async def ban_user(user_id: int, reason: str):
 
 
 async def unban_user(user_id: int):
-    """Unban user."""
     banned_users.delete_one({"_id": user_id})
-
-
-# =====================================================
-# ADMIN MANAGEMENT
-# =====================================================
-
+    
+# -------------------------------
+# Admin Management
+# -------------------------------
 async def add_admin(user_id: int):
-    """Add admin (no duplicate)."""
-    admin_data.update_one(
-        {"_id": user_id},
-        {"$setOnInsert": {"_id": user_id}},
-        upsert=True
-    )
-
+    """Add a user as admin."""
+    admin_data.update_one({'_id': user_id}, {'$set': {'_id': user_id}}, upsert=True)
 
 async def remove_admin(user_id: int):
-    """Remove admin."""
-    admin_data.delete_one({"_id": user_id})
-
+    """Remove a user from admin list."""
+    admin_data.delete_one({'_id': user_id})
 
 async def list_admins() -> list:
-    """Return sorted admin IDs."""
-    return [
-        admin["_id"]
-        for admin in admin_data.find({}, {"_id": 1}).sort("_id", 1)
-    ]
-
+    """Return a list of all admin user IDs."""
+    return [doc['_id'] for doc in admin_data.find()]
 
 async def is_admin(user_id: int) -> bool:
-    """Check if user is admin."""
-    return bool(admin_data.find_one({"_id": user_id}))
+    """Check if a user is admin."""
+    return admin_data.find_one({'_id': user_id}) is not None
