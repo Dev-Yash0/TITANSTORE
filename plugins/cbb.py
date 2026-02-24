@@ -1,7 +1,7 @@
 from pyrogram import Client
 from bot import Bot
 from config import *
-from Script import START_MSG, HELP_TXT, ABOUT_TXT, COMMANDS_TXT, DISCLAIMER_TXT
+from Script import COMMANDS_TXT, DISCLAIMER_TXT
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from database.database import add_user, del_user, full_userbase, present_user
 
